@@ -26,14 +26,14 @@
   .box:first-child.mid { color: var(--mid); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9 15V11a7 7 0 0 1 13.5-2.6' fill='none' stroke='%23d98e04' stroke-width='3' stroke-linecap='round'/%3E%3Crect x='5' y='15' width='22' height='15' rx='3' fill='%23d98e04'/%3E%3Ccircle cx='16' cy='22' r='2.4' fill='white'/%3E%3C/svg%3E"); }
   .box:first-child.good { color: var(--good); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9 15V11a7 7 0 0 1 14 0v4' fill='none' stroke='%231f8a5b' stroke-width='3' stroke-linecap='round'/%3E%3Crect x='5' y='15' width='22' height='15' rx='3' fill='%231f8a5b'/%3E%3Ccircle cx='16' cy='22' r='2.4' fill='white'/%3E%3C/svg%3E"); }
   .box.bad:not(:first-child), .box.mid:not(:first-child), .box.good:not(:first-child) { font-weight: 700; }
-  .info { font-size: .9rem; color: #4a5365; }
+  .info { font-size: .9rem; color: #4a5365; white-space: pre-line; }
 </style>
 </head>
 <body>
 <header><div><svg viewBox='0 0 32 32' aria-hidden='true'><path d='M9 15V11a7 7 0 0 1 14 0v4' fill='none' stroke='#fff' stroke-width='3' stroke-linecap='round'/><rect x='5' y='15' width='22' height='15' rx='3' fill='#fff'/></svg>PassGuard</div></header>
 <main>
 <h1>내 비밀번호,<br>안전할까?</h1>
-<p class="lead">비밀번호 원문은 저장하지도, 보내지도 않아요. 유출 여부는 해시 앞 5자리만 보내서 확인해요.</p>
+<p class="lead">입력한 비밀번호는 저장하지도, 보내지도 않아요. 유출 확인은 비밀번호를 알아볼 수 없는 기호로 바꾼 뒤, 그중 앞 5글자만 보내서 해요.</p>
 
 <form id="form" autocomplete="off">
   <input id="pw" type="password" autocomplete="off" placeholder="비밀번호 입력" aria-label="비밀번호">
@@ -106,16 +106,22 @@ $("form").addEventListener("submit", async e => {
   if (count === null) {
     box("mid", "유출 여부를 확인하지 못했어요. 인터넷 연결을 확인하고 ‘검사하기’를 다시 눌러 주세요. 위의 강도 검사 결과는 그대로 참고할 수 있어요.");
   } else if (count > 0) {
-    box("bad", `이 비밀번호가 유출 목록에서 ${count.toLocaleString()}번 발견됐어요. 지금 쓰고 있다면 바로 바꾸세요. 같은 비밀번호를 쓴 다른 사이트에서도 바꿔 주세요.`);
+    box("bad", `이 비밀번호는 과거에 공개된 유출 목록에 ${count.toLocaleString()}번 들어 있어요. 내 계정이 해킹됐다는 뜻은 아니지만, 다른 사람도 이미 알고 있는 비밀번호예요. 이 비밀번호를 쓰는 곳이 있다면 바꾸는 게 좋아요.`);
   } else {
     box("good", "알려진 유출 목록에서 발견되지 않았어요. 하지만 안전하다고 보장할 수는 없어요. 위의 강도 검사 결과도 확인해 주세요.");
   }
 
   // 개선 안내
   if (count > 0 || level === "weak") {
-    box("info", "사이트마다 서로 다른 긴 비밀번호를 쓰세요. 비밀번호 관리자 앱을 쓰면 직접 외우지 않아도 돼요. 가능하면 로그인할 때 추가 확인을 하는 ‘2단계 인증’도 켜세요.");
+    box("info", `이렇게 바꿔 보세요
+1. 이 비밀번호를 쓰는 사이트에 로그인한 뒤 ‘내 정보’나 ‘설정’에서 ‘비밀번호 변경’ 메뉴로 가세요.
+2. 사이트마다 다른 비밀번호로 바꾸세요. 12자 이상, 짧은 문장처럼 길게 만들면 좋아요.
+3. 같은 설정 화면에서 ‘2단계 인증’을 켜세요. 로그인할 때 문자나 인증 앱 번호로 한 번 더 확인하는 기능이에요.
+4. 외우기 어렵다면 비밀번호 관리자를 써 보세요. 비밀번호를 만들어 주고 안전하게 저장해 주는 앱이에요. 휴대폰의 Google 비밀번호 관리자나 iCloud 키체인처럼 이미 들어 있는 것도 있어요.`);
   } else {
-    box("info", "사이트마다 다른 비밀번호를 쓰세요. 로그인할 때 추가 확인을 하는 ‘2단계 인증’을 켜면 더 안전해요.");
+    box("info", `더 안전하게 쓰려면
+· 사이트마다 다른 비밀번호를 쓰세요.
+· ‘2단계 인증’을 켜세요. 로그인할 때 문자나 인증 앱 번호로 한 번 더 확인하는 기능이에요. 보통 사이트의 ‘설정’이나 ‘보안’ 메뉴에 있어요.`);
   }
 });
 </script>
