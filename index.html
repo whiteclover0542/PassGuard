@@ -63,27 +63,52 @@
 <script>
 const $ = id => document.getElementById(id);
 
-// 강도: 약함 / 보통 / 강함
+// 강도: 약함 / 보통 / 강함 + 그렇게 판정한 이유
 const SEQS = ["abcdefghijklmnopqrstuvwxyz", "0123456789", "qwertyuiop", "asdfghjkl", "zxcvbnm"];
 const WORDS = ["password", "passw0rd", "admin", "letmein", "welcome", "iloveyou"];
+// 한글 단어를 영문 자판으로 친 것: 안녕, 사랑, 행복, 하늘, 비밀번호, 대한민국, 바보
+const KO_WORDS = ["dkssud", "tkfkd", "godqhr", "gksmf", "qlalfqjsgh", "eogksalsrnr", "qkqh"];
 
-function hasPattern(pw) {
-  const s = pw.toLowerCase();
-  if (/(.)\1{2,}/.test(s)) return true; // aaa
-  if (WORDS.some(w => s.includes(w))) return true;
-  for (const seq of SEQS) {
-    for (const q of [seq, [...seq].reverse().join("")]) {
-      for (let i = 0; i + 4 <= q.length; i++) if (s.includes(q.slice(i, i + 4))) return true;
-    }
-  }
-  return false;
+function hasSeq(s) {
+  return SEQS.some(seq => [seq, [...seq].reverse().join("")].some(q => {
+    for (let i = 0; i + 4 <= q.length; i++) if (s.includes(q.slice(i, i + 4))) return true;
+    return false;
+  }));
+}
+
+function patterns(pw) {
+  const s = pw.toLowerCase(), found = [];
+  if (/(.)\1{2,}/.test(s)) found.push("같은 글자가 3번 이상 이어져요.");
+  if (WORDS.some(w => s.includes(w))) found.push("password처럼 흔히 쓰는 영어 단어가 들어 있어요.");
+  if (hasSeq(s)) found.push("1234, abcd, qwer처럼 연속된 글자나 키보드 순서가 들어 있어요.");
+  if (KO_WORDS.some(w => s.includes(w))) found.push("한글 단어를 영문 자판으로 친 부분이 있어요(예: 안녕 → dkssud). 많이 쓰는 방법이라 쉽게 추측돼요.");
+  if (/01[016789]-?\d{3,4}-?\d{4}/.test(s)) found.push("전화번호 형태가 들어 있어요.");
+  else if (/(19|20)?\d\d(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])/.test(s)) found.push("생년월일 같은 날짜가 들어 있어요.");
+  return found;
 }
 
 function strength(pw) {
   const kinds = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^a-zA-Z0-9]/].filter(r => r.test(pw)).length;
-  if (pw.length < 8 || hasPattern(pw)) return "weak";
-  if (pw.length >= 16 && kinds >= 3) return "strong";
-  return "medium";
+  const found = patterns(pw);
+  const reasons = pw.length < 8 ? [`${pw.length}자로 너무 짧아요. 8자 이상이어야 해요.`, ...found] : found;
+  if (reasons.length) return { level: "weak", reasons, pattern: found.length > 0 };
+  if (pw.length < 16) reasons.push(`${pw.length}자예요. 16자 이상이면 훨씬 안전해요.`);
+  if (kinds < 3) reasons.push(`대문자·소문자·숫자·기호 중 ${kinds}종류만 섞여 있어요. 3종류 이상 섞으면 좋아요.`);
+  return { level: reasons.length ? "medium" : "strong", reasons, pattern: false };
+}
+
+// 추측에 걸리는 대략적인 시간. 무작위로 만든 비밀번호를 초당 1000억 번 대입한다고 가정
+// ponytail: 문자 종류 x 길이만 보는 단순 계산, 사전 공격까지 반영하려면 zxcvbn 같은 라이브러리 필요
+function crackTime(pw) {
+  const pool = [[/[a-z]/, 26], [/[A-Z]/, 26], [/[0-9]/, 10], [/[^a-zA-Z0-9]/, 33]].reduce((n, [r, k]) => r.test(pw) ? n + k : n, 0);
+  const secs = 10 ** (pw.length * Math.log10(pool) - Math.log10(2) - 11);
+  const years = secs / 31536000;
+  if (years >= 1e8) return "1억 년 이상";
+  if (years >= 1e4) return `약 ${Math.round(years / 1e4).toLocaleString()}만 년`;
+  for (const [name, u] of [["년", 31536000], ["일", 86400], ["시간", 3600], ["분", 60], ["초", 1]]) {
+    if (secs >= u) return `약 ${Math.round(secs / u).toLocaleString()}${name}`;
+  }
+  return "1초도 안 걸려요";
 }
 
 // 유출 확인: SHA-1 앞 5자리만 전송, 나머지는 로컬에서 대조
@@ -101,10 +126,11 @@ function box(cls, text) {
   d.className = "box " + cls;
   d.textContent = text;
   $("result").append(d);
+  return d;
 }
 
 const LABEL = { weak: ["bad", "강도: 약함 — 추측하기 쉬운 비밀번호예요."],
-                medium: ["mid", "강도: 보통 — 지금 비밀번호 뒤에 단어 하나와 숫자·기호를 더 붙여 16자 이상으로 만들어 보세요."],
+                medium: ["mid", "강도: 보통 — 조금만 보완하면 안전해져요."],
                 strong: ["good", "강도: 강함 — 길고 복잡해서 추측하기 어려워요."] };
 
 $("form").addEventListener("submit", async e => {
@@ -114,8 +140,13 @@ $("form").addEventListener("submit", async e => {
   $("links").hidden = true;
   if (!pw) return box("info", "비밀번호를 입력해 주세요.");
 
-  const level = strength(pw);
+  const { level, reasons, pattern } = strength(pw);
   box(...LABEL[level]);
+  if (reasons.length) box("info", "이런 점 때문이에요\n" + reasons.map(r => "· " + r).join("\n"));
+  const crack = pattern
+    ? box("info", "컴퓨터로 추측하면: 몇 초 안\n흔한 패턴은 가장 먼저 시도하기 때문이에요.")
+    : box("info", `컴퓨터로 추측하면: ${crackTime(pw)}
+아주 빠른 컴퓨터가 쉬지 않고 대입해 본다고 가정한 대략적인 값이에요.`);
   box("info", "유출 여부를 확인하는 중…");
 
   let count = null;
@@ -129,6 +160,7 @@ $("form").addEventListener("submit", async e => {
     $("result").prepend($("result").lastChild); // 유출이 강도보다 먼저 보이게
     box("bad", "유출된 적 있는 비밀번호예요.");
     $("result").prepend($("result").lastChild);
+    crack.textContent = "컴퓨터로 추측하면: 거의 바로\n유출 목록에 있는 비밀번호는 가장 먼저 시도되기 때문이에요.";
   } else {
     box("good", "알려진 유출 목록에서 발견되지 않았어요. 하지만 안전하다고 보장할 수는 없어요. 강도 검사 결과도 확인해 주세요.");
   }
