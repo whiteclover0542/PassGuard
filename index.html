@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PassGuard</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 16px; line-height: 1.5; }
+  input, button { font-size: 1rem; padding: 10px; box-sizing: border-box; }
+  input { width: 100%; }
+  button { width: 100%; margin-top: 8px; }
+  #result { margin-top: 16px; }
+  .box { border-left: 6px solid; padding: 8px 12px; margin-bottom: 12px; overflow-wrap: anywhere; }
+  .bad { border-color: #c62828; } .mid { border-color: #ef6c00; } .good { border-color: #2e7d32; } .info { border-color: #757575; }
+</style>
+</head>
+<body>
+<h1>PassGuard</h1>
+<p>비밀번호가 안전한지 확인해 보세요. 입력한 비밀번호는 저장되거나 전송되지 않습니다.</p>
+
+<form id="form" autocomplete="off">
+  <input id="pw" type="password" autocomplete="off" placeholder="비밀번호 입력" aria-label="비밀번호">
+  <button type="submit">검사하기</button>
+</form>
+<div id="result" aria-live="polite"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// 강도: 약함 / 보통 / 강함
+const SEQS = ["abcdefghijklmnopqrstuvwxyz", "0123456789", "qwertyuiop", "asdfghjkl", "zxcvbnm"];
+const WORDS = ["password", "passw0rd", "admin", "letmein", "welcome", "iloveyou"];
+
+function hasPattern(pw) {
+  const s = pw.toLowerCase();
+  if (/(.)\1{2,}/.test(s)) return true; // aaa
+  if (WORDS.some(w => s.includes(w))) return true;
+  for (const seq of SEQS) {
+    for (const q of [seq, [...seq].reverse().join("")]) {
+      for (let i = 0; i + 4 <= q.length; i++) if (s.includes(q.slice(i, i + 4))) return true;
+    }
+  }
+  return false;
+}
+
+function strength(pw) {
+  const kinds = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^a-zA-Z0-9]/].filter(r => r.test(pw)).length;
+  if (pw.length < 8 || hasPattern(pw)) return "weak";
+  if (pw.length >= 16 && kinds >= 3) return "strong";
+  return "medium";
+}
+
+// 유출 확인: SHA-1 앞 5자리만 전송, 나머지는 로컬에서 대조
+async function breachCount(pw) {
+  const buf = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(pw));
+  const hash = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("").toUpperCase();
+  const res = await fetch("https://api.pwnedpasswords.com/range/" + hash.slice(0, 5));
+  if (!res.ok) throw new Error("HIBP " + res.status);
+  const line = (await res.text()).split("\n").find(l => l.startsWith(hash.slice(5)));
+  return line ? parseInt(line.split(":")[1], 10) : 0;
+}
+
+function box(cls, text) {
+  const d = document.createElement("div");
+  d.className = "box " + cls;
+  d.textContent = text;
+  $("result").append(d);
+}
+
+const LABEL = { weak: ["bad", "강도: 약함 — 추측하기 쉬운 비밀번호예요."],
+                medium: ["mid", "강도: 보통 — 조금 더 길게 만들면 더 안전해요."],
+                strong: ["good", "강도: 강함 — 길고 복잡해서 추측하기 어려워요."] };
+
+$("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const pw = $("pw").value;
+  $("result").replaceChildren();
+  if (!pw) return box("info", "비밀번호를 입력해 주세요.");
+
+  const level = strength(pw);
+  box(...LABEL[level]);
+  box("info", "유출 여부를 확인하는 중…");
+
+  let count = null;
+  try { count = await breachCount(pw); } catch { /* 아래에서 실패 표시 */ }
+  $("result").lastChild.remove();
+
+  if (count === null) {
+    box("mid", "유출 확인 실패 — 인터넷 연결을 확인하고 다시 시도해 주세요. (강도 검사 결과는 위와 같아요.)");
+  } else if (count > 0) {
+    box("bad", `이 비밀번호는 유출된 적이 있어요 (${count.toLocaleString()}번 발견). 지금 쓰고 있다면 바로 바꾸세요. 같은 비밀번호를 쓴 다른 사이트도 함께 바꿔 주세요.`);
+  } else {
+    box("good", "알려진 유출 목록에서 발견되지 않았어요.");
+  }
+
+  // 개선 안내
+  if (count > 0 || level === "weak") {
+    box("info", "이렇게 해 보세요: 12자 이상으로, 사이트마다 다른 비밀번호를 쓰세요. 비밀번호 관리자를 쓰면 외우지 않아도 돼요. 가능하면 2단계 인증도 켜세요.");
+  } else {
+    box("info", "잘하고 계세요. 사이트마다 다른 비밀번호를 쓰고, 2단계 인증을 켜면 더 안전해요.");
+  }
+});
+</script>
+</body>
+</html>
