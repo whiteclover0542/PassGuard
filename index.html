@@ -5,24 +5,42 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PassGuard</title>
 <style>
-  body { font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 16px; line-height: 1.5; }
-  input, button { font-size: 1rem; padding: 10px; box-sizing: border-box; }
-  input { width: 100%; }
-  button { width: 100%; margin-top: 8px; }
-  #result { margin-top: 16px; }
-  .box { border-left: 6px solid; padding: 8px 12px; margin-bottom: 12px; overflow-wrap: anywhere; }
-  .bad { border-color: #c62828; } .mid { border-color: #ef6c00; } .good { border-color: #2e7d32; } .info { border-color: #757575; }
+  :root { --ink:#1b2333; --navy:#14264a; --bad:#c8344a; --mid:#d98e04; --good:#1f8a5b; }
+  body { margin: 0; font: 16px/1.6 "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif; color: var(--ink); background: #f4f6f9; }
+  header { background: var(--navy); color: #fff; padding: 14px 16px; }
+  header div { max-width: 480px; margin: 0 auto; display: flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: .02em; }
+  header svg { width: 22px; height: 22px; }
+  main { max-width: 480px; margin: 0 auto; padding: 28px 16px 40px; }
+  h1 { font-size: 1.75rem; line-height: 1.25; font-weight: 800; margin: 0 0 10px; letter-spacing: -0.03em; }
+  .lead { margin: 0 0 20px; font-size: .9rem; color: #5b6475; }
+  input, button { box-sizing: border-box; font: inherit; width: 100%; padding: 12px; border-radius: 6px; }
+  input { border: 2px solid #8a94a6; background: #fff; font-size: 1.1rem; }
+  input:focus { border-color: var(--navy); outline: none; }
+  button { margin-top: 10px; border: 0; background: var(--navy); color: #fff; font-weight: 700; cursor: pointer; }
+  button:hover { background: #0d1b36; }
+  :focus-visible { outline: 3px solid #f0a020; outline-offset: 2px; }
+  #result { margin-top: 24px; }
+  .box { padding: 10px 0; border-top: 1px solid #d5dae3; overflow-wrap: anywhere; }
+  .box:first-child { border: 0; padding: 6px 0 14px 60px; min-height: 48px; font-size: 1.2rem; line-height: 1.4; font-weight: 800; background: no-repeat left center / 44px; }
+  .box:first-child.bad { color: var(--bad); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9 15V11a7 7 0 0 1 13.5-2.6' fill='none' stroke='%23c8344a' stroke-width='3' stroke-linecap='round'/%3E%3Crect x='5' y='15' width='22' height='15' rx='3' fill='%23c8344a'/%3E%3Ccircle cx='16' cy='22' r='2.4' fill='white'/%3E%3C/svg%3E"); }
+  .box:first-child.mid { color: var(--mid); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9 15V11a7 7 0 0 1 13.5-2.6' fill='none' stroke='%23d98e04' stroke-width='3' stroke-linecap='round'/%3E%3Crect x='5' y='15' width='22' height='15' rx='3' fill='%23d98e04'/%3E%3Ccircle cx='16' cy='22' r='2.4' fill='white'/%3E%3C/svg%3E"); }
+  .box:first-child.good { color: var(--good); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9 15V11a7 7 0 0 1 14 0v4' fill='none' stroke='%231f8a5b' stroke-width='3' stroke-linecap='round'/%3E%3Crect x='5' y='15' width='22' height='15' rx='3' fill='%231f8a5b'/%3E%3Ccircle cx='16' cy='22' r='2.4' fill='white'/%3E%3C/svg%3E"); }
+  .box.bad:not(:first-child), .box.mid:not(:first-child), .box.good:not(:first-child) { font-weight: 700; }
+  .info { font-size: .9rem; color: #4a5365; }
 </style>
 </head>
 <body>
-<h1>PassGuard</h1>
-<p>비밀번호가 안전한지 확인해 보세요. 입력한 비밀번호는 저장되거나 전송되지 않습니다.</p>
+<header><div><svg viewBox='0 0 32 32' aria-hidden='true'><path d='M9 15V11a7 7 0 0 1 14 0v4' fill='none' stroke='#fff' stroke-width='3' stroke-linecap='round'/><rect x='5' y='15' width='22' height='15' rx='3' fill='#fff'/></svg>PassGuard</div></header>
+<main>
+<h1>내 비밀번호,<br>안전할까?</h1>
+<p class="lead">비밀번호 원문은 저장하지도, 보내지도 않아요. 유출 여부는 해시 앞 5자리만 보내서 확인해요.</p>
 
 <form id="form" autocomplete="off">
   <input id="pw" type="password" autocomplete="off" placeholder="비밀번호 입력" aria-label="비밀번호">
   <button type="submit">검사하기</button>
 </form>
 <div id="result" aria-live="polite"></div>
+</main>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -68,7 +86,7 @@ function box(cls, text) {
 }
 
 const LABEL = { weak: ["bad", "강도: 약함 — 추측하기 쉬운 비밀번호예요."],
-                medium: ["mid", "강도: 보통 — 조금 더 길게 만들면 더 안전해요."],
+                medium: ["mid", "강도: 보통 — 16자 이상으로 늘리고, 대문자·소문자·숫자·기호 중 3종류 이상을 섞어 보세요."],
                 strong: ["good", "강도: 강함 — 길고 복잡해서 추측하기 어려워요."] };
 
 $("form").addEventListener("submit", async e => {
@@ -86,18 +104,18 @@ $("form").addEventListener("submit", async e => {
   $("result").lastChild.remove();
 
   if (count === null) {
-    box("mid", "유출 확인 실패 — 인터넷 연결을 확인하고 다시 시도해 주세요. (강도 검사 결과는 위와 같아요.)");
+    box("mid", "유출 여부를 확인하지 못했어요. 인터넷 연결을 확인하고 ‘검사하기’를 다시 눌러 주세요. 위의 강도 검사 결과는 그대로 참고할 수 있어요.");
   } else if (count > 0) {
-    box("bad", `이 비밀번호는 유출된 적이 있어요 (${count.toLocaleString()}번 발견). 지금 쓰고 있다면 바로 바꾸세요. 같은 비밀번호를 쓴 다른 사이트도 함께 바꿔 주세요.`);
+    box("bad", `이 비밀번호가 유출 목록에서 ${count.toLocaleString()}번 발견됐어요. 지금 쓰고 있다면 바로 바꾸세요. 같은 비밀번호를 쓴 다른 사이트에서도 바꿔 주세요.`);
   } else {
-    box("good", "알려진 유출 목록에서 발견되지 않았어요.");
+    box("good", "알려진 유출 목록에서 발견되지 않았어요. 하지만 안전하다고 보장할 수는 없어요. 위의 강도 검사 결과도 확인해 주세요.");
   }
 
   // 개선 안내
   if (count > 0 || level === "weak") {
-    box("info", "이렇게 해 보세요: 12자 이상으로, 사이트마다 다른 비밀번호를 쓰세요. 비밀번호 관리자를 쓰면 외우지 않아도 돼요. 가능하면 2단계 인증도 켜세요.");
+    box("info", "사이트마다 서로 다른 긴 비밀번호를 쓰세요. 비밀번호 관리자 앱을 쓰면 직접 외우지 않아도 돼요. 가능하면 로그인할 때 추가 확인을 하는 ‘2단계 인증’도 켜세요.");
   } else {
-    box("info", "잘하고 계세요. 사이트마다 다른 비밀번호를 쓰고, 2단계 인증을 켜면 더 안전해요.");
+    box("info", "사이트마다 다른 비밀번호를 쓰세요. 로그인할 때 추가 확인을 하는 ‘2단계 인증’을 켜면 더 안전해요.");
   }
 });
 </script>
