@@ -5,39 +5,64 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PassGuard</title>
 <style>
-  :root { --ink:#1b2333; --navy:#14264a; --bad:#c8344a; --mid:#d98e04; --good:#1f8a5b; }
-  body { margin: 0; font: 16px/1.6 "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif; color: var(--ink); background: #f4f6f9; }
-  header { background: var(--navy); color: #fff; padding: 14px 16px; }
+  :root { --ink:#1b2333; --navy:#14264a; --bad:#c8344a; --mid:#d98e04; --good:#1f8a5b; --line:#d5dae3; --muted:#4a5365; }
+  html.big { font-size: 125%; }
+  body { margin: 0; font: 1rem/1.6 "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif; color: var(--ink); background: #f4f6f9; }
+  header { background: var(--navy); color: #fff; padding: 10px 16px; }
   header div { max-width: 480px; margin: 0 auto; display: flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: .02em; }
   header svg { width: 22px; height: 22px; }
   main { max-width: 480px; margin: 0 auto; padding: 28px 16px 40px; }
   h1 { font-size: 1.75rem; line-height: 1.25; font-weight: 800; margin: 0 0 10px; letter-spacing: -0.03em; }
+  h2 { font-size: 1.1rem; margin: 0 0 4px; }
   .lead { margin: 0 0 20px; font-size: .9rem; color: #5b6475; }
   input, button { box-sizing: border-box; font: inherit; width: 100%; padding: 12px; border-radius: 6px; }
   input { border: 2px solid #8a94a6; background: #fff; font-size: 1.1rem; }
   input:focus { border-color: var(--navy); outline: none; }
   button { margin-top: 10px; border: 0; background: var(--navy); color: #fff; font-weight: 700; cursor: pointer; }
   button:hover { background: #0d1b36; }
+  button.secondary { background: #fff; color: var(--navy); border: 2px solid var(--navy); }
+  button.secondary:hover { background: #e8edf5; }
+  #big { width: auto; margin: 0 0 0 auto; padding: 6px 10px; background: none; border: 1px solid #fff; font-size: .85rem; }
+  #big[aria-pressed=true] { background: #fff; color: var(--navy); }
   :focus-visible { outline: 3px solid #f0a020; outline-offset: 2px; }
+  .show, .check label { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
+  .show { margin-top: 8px; font-size: .9rem; color: var(--muted); }
+  .show input, .check input { width: auto; margin: .35em 0 0; flex: none; }
+
+  #live { margin-top: 10px; font-size: .9rem; color: var(--muted); }
+  #meter { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 4px; }
+  #meter i { height: 6px; border-radius: 3px; background: var(--line); }
+  #meter[data-level=weak] i:nth-child(1) { background: var(--bad); }
+  #meter[data-level=medium] i:nth-child(-n+2) { background: var(--mid); }
+  #meter[data-level=strong] i { background: var(--good); }
+
+  #gen { margin-top: 12px; padding: 12px; background: #fff; border: 1px solid var(--line); border-radius: 6px; }
+  #genOut { font-family: Consolas, "Courier New", monospace; letter-spacing: .05em; }
+  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(6em, 1fr)); gap: 0 6px; }
+  .row button { white-space: nowrap; }
+  .row button { padding: 10px 4px; font-size: .9rem; }
+  .note { margin: 8px 0 0; font-size: .85rem; color: var(--muted); }
+
   #result { margin-top: 24px; }
-  .box { padding: 10px 0; border-top: 1px solid #d5dae3; overflow-wrap: anywhere; }
+  .box { padding: 10px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
   .box:first-child { border: 0; padding: 6px 0 14px 60px; min-height: 48px; font-size: 1.2rem; line-height: 1.4; font-weight: 800; background: no-repeat left center / 44px; }
   .box:first-child.bad { color: var(--bad); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9 15V11a7 7 0 0 1 13.5-2.6' fill='none' stroke='%23c8344a' stroke-width='3' stroke-linecap='round'/%3E%3Crect x='5' y='15' width='22' height='15' rx='3' fill='%23c8344a'/%3E%3Ccircle cx='16' cy='22' r='2.4' fill='white'/%3E%3C/svg%3E"); }
   .box:first-child.mid { color: var(--mid); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9 15V11a7 7 0 0 1 13.5-2.6' fill='none' stroke='%23d98e04' stroke-width='3' stroke-linecap='round'/%3E%3Crect x='5' y='15' width='22' height='15' rx='3' fill='%23d98e04'/%3E%3Ccircle cx='16' cy='22' r='2.4' fill='white'/%3E%3C/svg%3E"); }
   .box:first-child.good { color: var(--good); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9 15V11a7 7 0 0 1 14 0v4' fill='none' stroke='%231f8a5b' stroke-width='3' stroke-linecap='round'/%3E%3Crect x='5' y='15' width='22' height='15' rx='3' fill='%231f8a5b'/%3E%3Ccircle cx='16' cy='22' r='2.4' fill='white'/%3E%3C/svg%3E"); }
   .box.bad:not(:first-child), .box.mid:not(:first-child), .box.good:not(:first-child) { font-weight: 700; }
-  .show { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: .9rem; color: #4a5365; cursor: pointer; }
-  .show input { width: auto; margin: 0; }
-  #links { margin-top: 16px; padding-top: 14px; border-top: 1px solid #d5dae3; font-size: .9rem; }
-  #links h2 { font-size: 1rem; margin: 0 0 4px; }
-  #links p { margin: 0 0 8px; color: #4a5365; }
+  .info { font-size: .9rem; color: var(--muted); white-space: pre-line; }
+
+  #links, .check { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); font-size: .9rem; }
+  #links p, .check p { margin: 0 0 8px; color: var(--muted); }
   #links ul { margin: 0; padding-left: 1.2em; }
   #links a { color: var(--navy); font-weight: 700; display: inline-block; padding: 4px 0; }
-  .info { font-size: .9rem; color: #4a5365; white-space: pre-line; }
+  .check { margin-top: 32px; border-top: 2px solid var(--navy); }
+  .check label { padding: 6px 0; }
+  #score { margin: 10px 0 0; font-weight: 700; color: var(--ink); }
 </style>
 </head>
 <body>
-<header><div><svg viewBox='0 0 32 32' aria-hidden='true'><path d='M9 15V11a7 7 0 0 1 14 0v4' fill='none' stroke='#fff' stroke-width='3' stroke-linecap='round'/><rect x='5' y='15' width='22' height='15' rx='3' fill='#fff'/></svg>PassGuard</div></header>
+<header><div><svg viewBox='0 0 32 32' aria-hidden='true'><path d='M9 15V11a7 7 0 0 1 14 0v4' fill='none' stroke='#fff' stroke-width='3' stroke-linecap='round'/><rect x='5' y='15' width='22' height='15' rx='3' fill='#fff'/></svg>PassGuard<button id="big" type="button" aria-pressed="false">글자 크게</button></div></header>
 <main>
 <h1>내 비밀번호,<br>안전할까?</h1>
 <p class="lead">비밀번호 자체는 저장하지도, 보내지도 않아요. 유출 확인은 비밀번호를 알아볼 수 없는 값으로 바꾼 뒤 그 일부만 보내서 해요.</p>
@@ -45,8 +70,21 @@
 <form id="form" autocomplete="off">
   <input id="pw" type="password" autocomplete="off" placeholder="비밀번호 입력" aria-label="비밀번호">
   <label class="show"><input id="show" type="checkbox"> 비밀번호 보기</label>
+  <div id="live" hidden><div id="meter" aria-hidden="true"><i></i><i></i><i></i></div><span id="liveText"></span></div>
   <button type="submit">검사하기</button>
 </form>
+
+<button id="genBtn" type="button" class="secondary">안전한 비밀번호 만들어 주기</button>
+<div id="gen" hidden>
+  <input id="genOut" type="text" readonly autocomplete="off" aria-label="만든 비밀번호">
+  <div class="row">
+    <button id="copy" type="button" class="secondary">복사</button>
+    <button id="regen" type="button" class="secondary">다시 만들기</button>
+    <button id="useGen" type="button" class="secondary">이걸로 검사</button>
+  </div>
+  <p class="note">대문자·소문자·숫자·기호를 섞은 16자예요. 16자까지만 받는 사이트에서도 쓸 수 있어요. 외우기보다는 비밀번호 관리자에 저장해 두세요.</p>
+</div>
+
 <div id="result" aria-live="polite"></div>
 <section id="links" hidden>
   <h2>바로 가기: 비밀번호 변경·2단계 인증</h2>
@@ -58,8 +96,22 @@
     <li><a href="https://account.apple.com/account/manage" target="_blank" rel="noopener noreferrer">애플 — 로그인 및 보안</a></li>
   </ul>
 </section>
+
+<section class="check" id="check">
+  <h2>내 계정 보안 체크리스트</h2>
+  <p>지키고 있는 항목에 체크해 보세요. 체크한 내용은 어디에도 저장되지 않아요.</p>
+  <label><input type="checkbox" data-tip="계정 설정의 ‘보안’ 메뉴에서 2단계 인증을 켜세요. 로그인할 때 문자나 인증 앱 번호로 한 번 더 확인해요."> 주요 계정(네이버·카카오·구글 등)에 2단계 인증을 켜 뒀어요</label>
+  <label><input type="checkbox" data-tip="이메일과 은행처럼 중요한 계정부터 서로 다른 비밀번호로 바꾸세요. 한 곳이 유출되면 같은 비밀번호를 쓴 곳이 모두 위험해져요."> 사이트마다 다른 비밀번호를 써요</label>
+  <label><input type="checkbox" data-tip="종이나 메모 앱, 사진 대신 비밀번호 관리자에 저장하세요. 휴대폰의 Google 비밀번호 관리자나 iCloud 키체인을 쓸 수 있어요."> 비밀번호를 종이·메모 앱·사진에 적어 두지 않아요</label>
+  <label><input type="checkbox" data-tip="계정 설정에서 복구용 전화번호와 이메일을 확인하세요. 계정을 잃어버렸을 때 되찾는 데 필요해요."> 계정 복구용 전화번호와 이메일이 지금 쓰는 것이에요</label>
+  <label><input type="checkbox" data-tip="계정 설정에서 ‘로그인 알림’을 켜 두세요. 누군가 몰래 로그인하면 바로 알 수 있어요."> 모르는 기기에서 로그인하면 알림을 받아요</label>
+  <label><input type="checkbox" data-tip="휴대폰에 비밀번호·지문·얼굴 잠금을 설정하세요. 휴대폰을 잃어버려도 인증 문자와 앱을 남이 볼 수 없어요."> 휴대폰에 화면 잠금(비밀번호·지문·얼굴)을 써요</label>
+  <p id="score" aria-live="polite" hidden></p>
+  <div id="tips" class="info"></div>
+</section>
 </main>
 
+<script src="zxcvbn.js" async></script>
 <script>
 const $ = id => document.getElementById(id);
 
@@ -87,28 +139,56 @@ function patterns(pw) {
   return found;
 }
 
+// zxcvbn: 영어 단어·이름·흔한 비밀번호 사전으로 추측 횟수를 계산 (zxcvbn.js, 비동기 로드)
+const zx = pw => typeof zxcvbn === "function" ? zxcvbn(pw.slice(0, 100)) : null;
+
 function strength(pw) {
   const kinds = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^a-zA-Z0-9]/].filter(r => r.test(pw)).length;
   const found = patterns(pw);
+  const z = zx(pw);
   const reasons = pw.length < 8 ? [`${pw.length}자로 너무 짧아요. 8자 이상이어야 해요.`, ...found] : found;
+  if (!found.length && z && z.score <= 2) reasons.push("영어 단어나 이름처럼 사전에 있는 말을 조합해서 쉽게 추측돼요.");
   if (reasons.length) return { level: "weak", reasons, pattern: found.length > 0 };
   if (pw.length < 16) reasons.push(`${pw.length}자예요. 16자 이상이면 훨씬 안전해요.`);
   if (kinds < 3) reasons.push(`대문자·소문자·숫자·기호 중 ${kinds}종류만 섞여 있어요. 3종류 이상 섞으면 좋아요.`);
   return { level: reasons.length ? "medium" : "strong", reasons, pattern: false };
 }
 
-// 추측에 걸리는 대략적인 시간. 무작위로 만든 비밀번호를 초당 1000억 번 대입한다고 가정
-// ponytail: 문자 종류 x 길이만 보는 단순 계산, 사전 공격까지 반영하려면 zxcvbn 같은 라이브러리 필요
-function crackTime(pw) {
+// 추측에 걸리는 대략적인 시간 (초당 100억 번 대입 가정)
+// 단어·패턴 구간은 zxcvbn 값을 쓰고, 무작위 구간은 zxcvbn이 글자당 10가지로만 세므로 실제 문자 종류 수로 보정
+// zxcvbn이 아직 안 불러와졌거나 실패하면 문자 종류 x 길이로만 계산
+function crackSeconds(pw) {
   const pool = [[/[a-z]/, 26], [/[A-Z]/, 26], [/[0-9]/, 10], [/[^a-zA-Z0-9]/, 33]].reduce((n, [r, k]) => r.test(pw) ? n + k : n, 0);
-  const secs = 10 ** (pw.length * Math.log10(pool) - Math.log10(2) - 11);
-  const years = secs / 31536000;
+  const z = zx(pw);
+  if (!z) return 10 ** (pw.length * Math.log10(pool) - 10);
+  const extra = z.sequence.filter(m => m.pattern === "bruteforce").reduce((n, m) => n + m.token.length * (Math.log10(pool) - 1), 0);
+  return 10 ** (z.guesses_log10 + extra - 10);
+}
+
+function crackTime(pw) {
+  const secs = crackSeconds(pw), years = secs / 31536000;
   if (years >= 1e8) return "1억 년 이상";
   if (years >= 1e4) return `약 ${Math.round(years / 1e4).toLocaleString()}만 년`;
   for (const [name, u] of [["년", 31536000], ["일", 86400], ["시간", 3600], ["분", 60], ["초", 1]]) {
     if (secs >= u) return `약 ${Math.round(secs / u).toLocaleString()}${name}`;
   }
   return "1초 미만";
+}
+
+// 비밀번호 만들기: 헷갈리는 글자(0 O 1 l I) 제외, 네 종류 모두 포함, 흔한 패턴 없음
+const CHARSETS = ["ABCDEFGHJKLMNPQRSTUVWXYZ", "abcdefghijkmnopqrstuvwxyz", "23456789", "!@#$%^&*"];
+function randomChar(s) {
+  const max = 256 - 256 % s.length; // 나머지 연산으로 생기는 치우침 방지
+  let b;
+  do b = crypto.getRandomValues(new Uint8Array(1))[0]; while (b >= max);
+  return s[b % s.length];
+}
+function generate(len = 16) {
+  const all = CHARSETS.join("");
+  let pw;
+  do pw = Array.from({ length: len }, () => randomChar(all)).join("");
+  while (!CHARSETS.every(set => [...pw].some(c => set.includes(c))) || patterns(pw).length);
+  return pw;
 }
 
 // 유출 확인: SHA-1 앞 5자리만 전송, 나머지는 로컬에서 대조
@@ -132,6 +212,7 @@ function box(cls, text) {
 const LABEL = { weak: ["bad", "강도: 약함 — 추측하기 쉬운 비밀번호예요."],
                 medium: ["mid", "강도: 보통 — 조금만 보완하면 안전해져요."],
                 strong: ["good", "강도: 강함 — 길고 복잡해서 추측하기 어려워요."] };
+const SHORT = { weak: "약함", medium: "보통", strong: "강함" };
 
 $("form").addEventListener("submit", async e => {
   e.preventDefault();
@@ -145,7 +226,7 @@ $("form").addEventListener("submit", async e => {
   if (reasons.length) box("info", "이런 점 때문이에요\n" + reasons.map(r => "· " + r).join("\n"));
   const crack = pattern
     ? box("info", "해킹 프로그램이 알아내는 데 걸리는 시간: 몇 초\n흔한 패턴은 가장 먼저 시도하기 때문이에요.")
-    : box("info", `해킹 프로그램이 알아내는 데 걸리는 시간: ${crackTime(pw)}\n아주 빠른 컴퓨터로 쉬지 않고 대입해 본다고 가정한 대략적인 값이에요.`);
+    : box("info", `해킹 프로그램이 알아내는 데 걸리는 시간: ${crackTime(pw)}\n흔한 단어와 비밀번호부터 아주 빠르게 대입해 본다고 가정한 대략적인 값이에요.`);
   box("info", "유출 여부를 확인하는 중…");
 
   let count = null;
@@ -168,7 +249,7 @@ $("form").addEventListener("submit", async e => {
   if (count > 0 || level === "weak") {
     box("info", `이렇게 바꿔 보세요
 1. 이 비밀번호를 쓰는 사이트에 로그인한 뒤 ‘내 정보’나 ‘설정’에서 ‘비밀번호 변경’ 메뉴로 가세요.
-2. 사이트마다 다른 비밀번호로 바꾸세요. 12자 이상, 짧은 문장처럼 길게 만들면 좋아요.
+2. 사이트마다 다른 비밀번호로 바꾸세요. 위의 ‘안전한 비밀번호 만들어 주기’를 써도 돼요.
 3. 같은 설정 화면에서 ‘2단계 인증’을 켜세요. 로그인할 때 문자나 인증 앱 번호로 한 번 더 확인하는 기능이에요.
 4. 외우기 어렵다면 비밀번호 관리자를 써 보세요. 비밀번호를 만들어 주고 안전하게 저장해 주는 앱이에요. 휴대폰의 Google 비밀번호 관리자나 iCloud 키체인처럼 이미 들어 있는 것도 있어요.`);
   } else {
@@ -179,7 +260,49 @@ $("form").addEventListener("submit", async e => {
   $("links").hidden = false;
 });
 
+// 입력하면서 강도 미리 보기 (유출 조회는 ‘검사하기’를 누를 때만)
+function preview() {
+  const pw = $("pw").value;
+  $("result").replaceChildren();
+  $("links").hidden = true;
+  $("live").hidden = !pw;
+  if (!pw) return;
+  const { level, reasons } = strength(pw);
+  $("meter").dataset.level = level;
+  $("liveText").textContent = `강도 미리 보기: ${SHORT[level]}` + (reasons.length ? ` · ${reasons[0]}` : "");
+}
+$("pw").addEventListener("input", preview);
+
 $("show").addEventListener("change", e => { $("pw").type = e.target.checked ? "text" : "password"; });
+
+// 비밀번호 만들어 주기
+function newPassword() { $("genOut").value = generate(); $("copy").textContent = "복사"; }
+$("genBtn").addEventListener("click", () => { $("gen").hidden = false; newPassword(); });
+$("regen").addEventListener("click", newPassword);
+$("copy").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("genOut").value); $("copy").textContent = "복사됨"; }
+  catch { $("genOut").select(); $("copy").textContent = "직접 복사"; }
+});
+$("useGen").addEventListener("click", () => {
+  $("pw").value = $("genOut").value;
+  preview();
+  $("form").requestSubmit();
+});
+
+// 큰 글씨 모드
+$("big").addEventListener("click", e => {
+  const on = document.documentElement.classList.toggle("big");
+  e.target.setAttribute("aria-pressed", on);
+});
+
+// 계정 보안 체크리스트
+const checks = [...document.querySelectorAll("#check input")];
+checks.forEach(c => c.addEventListener("change", () => {
+  const todo = checks.filter(x => !x.checked);
+  $("score").hidden = false;
+  $("score").textContent = `${checks.length - todo.length} / ${checks.length}개 지키고 있어요.` + (todo.length ? " 이것부터 해 보세요." : " 아주 잘하고 있어요!");
+  $("tips").textContent = todo.map(x => "· " + x.dataset.tip).join("\n");
+}));
 </script>
 </body>
 </html>
