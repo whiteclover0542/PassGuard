@@ -21,6 +21,10 @@ assert.match(strength("Dkssud!Xm#82kQz").reasons.join(), /영문 자판/);
 assert.match(strength("Mk#950312zQx!Lp").reasons.join(), /생년월일/);
 assert.match(strength("Zx!01087654321q").reasons.join(), /전화번호/);
 assert.match(strength("abc").reasons[0], /3자로 너무 짧아요/);
+assert.match(strength("Rhdiddl!Xm#82kQz").reasons.join(), /영문 자판/); // 고양이
+assert.strictEqual(level("Minsu1995!"), "weak"); // KO_DICT 이름 + 연도
+assert.strictEqual(level("Saranghae2024!"), "weak");
+assert.strictEqual(strength("Minsu1995!").pattern, false); // 사전 단어는 "흔한 패턴"이 아니라 추측 시간을 계산해서 보여줌
 
 // 추측 시간: 단어를 이어 붙인 비밀번호는 더 이상 "1억 년 이상"이 아님
 assert.notStrictEqual(crackTime("correcthorsebatterystaple"), "1억 년 이상");
