@@ -22,6 +22,7 @@
 - 유출 확인은 [k-익명성](https://haveibeenpwned.com/API/v3#SearchingPwnedPasswordsByRange) 방식입니다. 브라우저에서 비밀번호의 SHA-1 해시를 만든 뒤 **앞 5자리만** 보내고, 돌아온 목록과의 대조는 브라우저에서 합니다.
 - `Add-Padding` 헤더로 응답에 가짜 항목을 섞어, 응답 크기로 해시 범위를 짐작할 수 없게 합니다.
 - 외부로 나가는 요청은 `api.pwnedpasswords.com/range/XXXXX`뿐입니다. zxcvbn도 저장소에 함께 두어 같은 주소에서 불러옵니다.
+- 콘텐츠 보안 정책(CSP)으로 브라우저가 `api.pwnedpasswords.com` 외의 곳으로는 연결하지 못하게 막습니다.
 
 ## 파일
 
