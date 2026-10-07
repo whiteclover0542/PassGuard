@@ -108,7 +108,7 @@ function crackTime(pw) {
   for (const [name, u] of [["년", 31536000], ["일", 86400], ["시간", 3600], ["분", 60], ["초", 1]]) {
     if (secs >= u) return `약 ${Math.round(secs / u).toLocaleString()}${name}`;
   }
-  return "1초도 안 걸려요";
+  return "1초 미만";
 }
 
 // 유출 확인: SHA-1 앞 5자리만 전송, 나머지는 로컬에서 대조
@@ -144,9 +144,8 @@ $("form").addEventListener("submit", async e => {
   box(...LABEL[level]);
   if (reasons.length) box("info", "이런 점 때문이에요\n" + reasons.map(r => "· " + r).join("\n"));
   const crack = pattern
-    ? box("info", "컴퓨터로 추측하면: 몇 초 안\n흔한 패턴은 가장 먼저 시도하기 때문이에요.")
-    : box("info", `컴퓨터로 추측하면: ${crackTime(pw)}
-아주 빠른 컴퓨터가 쉬지 않고 대입해 본다고 가정한 대략적인 값이에요.`);
+    ? box("info", "해킹 프로그램이 알아내는 데 걸리는 시간: 몇 초\n흔한 패턴은 가장 먼저 시도하기 때문이에요.")
+    : box("info", `해킹 프로그램이 알아내는 데 걸리는 시간: ${crackTime(pw)}\n아주 빠른 컴퓨터로 쉬지 않고 대입해 본다고 가정한 대략적인 값이에요.`);
   box("info", "유출 여부를 확인하는 중…");
 
   let count = null;
@@ -158,9 +157,9 @@ $("form").addEventListener("submit", async e => {
   } else if (count > 0) {
     box("bad", `이 비밀번호는 과거에 공개된 유출 목록에 ${count.toLocaleString()}번 들어 있어요. 내 계정이 해킹됐다는 뜻은 아니지만, 다른 사람도 이미 알고 있는 비밀번호예요. 이 비밀번호를 쓰는 곳이 있다면 바꾸는 게 좋아요.`);
     $("result").prepend($("result").lastChild); // 유출이 강도보다 먼저 보이게
-    box("bad", "유출된 적 있는 비밀번호예요.");
+    box("bad", "다른 곳에서 유출된 적이 있어요. 바꾸는 걸 권해요.");
     $("result").prepend($("result").lastChild);
-    crack.textContent = "컴퓨터로 추측하면: 거의 바로\n유출 목록에 있는 비밀번호는 가장 먼저 시도되기 때문이에요.";
+    crack.textContent = "해킹 프로그램이 알아내는 데 걸리는 시간: 거의 바로\n유출 목록에 있는 비밀번호는 가장 먼저 시도되기 때문이에요.";
   } else {
     box("good", "알려진 유출 목록에서 발견되지 않았어요. 하지만 안전하다고 보장할 수는 없어요. 강도 검사 결과도 확인해 주세요.");
   }

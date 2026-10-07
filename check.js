@@ -17,6 +17,6 @@ assert.match(strength("abc").reasons[0], /3자로 너무 짧아요/);
 // 추측 시간
 assert.strictEqual(crackTime("Xk9#mQ2$vL7@pR4!zT8w"), "1억 년 이상");
 assert.match(crackTime("Tiger7horse"), /^약 \d+(년|일)$/);
-assert.match(crackTime("a"), /1초도 안/);
+assert.match(crackTime("a"), /1초 미만/);
 
 console.log("ok");
